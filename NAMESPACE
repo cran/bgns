@@ -1,0 +1,5 @@
+useDynLib(bgns, .registration = TRUE, .fixes = "C_")
+export(bicor, bicor_knn)
+import(Matrix)
+import(methods)
+importFrom(stats,setNames)

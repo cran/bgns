@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Aditya Kshirsagar" />
+
+
+<title>bgns: Biweight Graph and Network Statistics</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">bgns: Biweight Graph and Network Statistics</h1>
+<h4 class="author">Aditya Kshirsagar</h4>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#scope">Scope</a></li>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#from-measurements-to-a-correlation-graph">From measurements to a correlation graph</a>
+<ul>
+<li><a href="#selecting-correlation-edges">Selecting correlation edges</a></li>
+<li><a href="#selecting-nearest-neighbors">Selecting nearest neighbors</a></li>
+</ul></li>
+<li><a href="#sparse-measurements-and-cross-matrix-neighbors">Sparse measurements and cross-matrix neighbors</a></li>
+<li><a href="#finite-overlap-and-normalization">Finite overlap and normalization</a></li>
+<li><a href="#undefined-scores">Undefined scores</a></li>
+<li><a href="#resource-configuration">Resource configuration</a></li>
+<li><a href="#session-information">Session information</a></li>
+</ul>
+</div>
+
+<div id="scope" class="section level2">
+<h2>Scope</h2>
+<p><code>bgns</code> estimates biweight midcorrelation and selects exact nearest neighbors from the resulting similarities. This vignette describes score calculation, edge selection, and incomplete-data handling through reproducible examples. The simulated measurements include positive and negative associations.</p>
+</div>
+<div id="installation" class="section level2">
+<h2>Installation</h2>
+<p>Source installation requires R &gt;= 4.3.0, a C++17 compiler, and the numerical libraries configured for R. Install the appropriate <a href="https://cran.r-project.org/bin/windows/Rtools/">Rtools</a> on Windows or follow the <a href="https://mac.r-project.org/tools/">R for macOS toolchain instructions</a>. OpenMP support is optional. WGCNA is not a runtime dependency.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">install.packages</span>(<span class="st">&quot;remotes&quot;</span>)</span>
+<span id="cb1-2"><a href="#cb1-2"></a>remotes<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;metaddict/bgns&quot;</span>)</span></code></pre></div>
+</div>
+<div id="from-measurements-to-a-correlation-graph" class="section level2">
+<h2>From measurements to a correlation graph</h2>
+<p>Arrange observations in rows and the entities to be compared in columns. For expression data, this orientation determines whether the graph connects genes, cells, or metacells. Apply the normalization and feature-selection steps appropriate to the study before calculating similarities.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="kw">library</span>(bgns)</span>
+<span id="cb2-2"><a href="#cb2-2"></a></span>
+<span id="cb2-3"><a href="#cb2-3"></a><span class="kw">set.seed</span>(<span class="dv">11</span>)</span>
+<span id="cb2-4"><a href="#cb2-4"></a>x &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">rnorm</span>(<span class="dv">80</span> <span class="op">*</span><span class="st"> </span><span class="dv">6</span>), <span class="dt">nrow =</span> <span class="dv">80</span>, <span class="dt">ncol =</span> <span class="dv">6</span>)</span>
+<span id="cb2-5"><a href="#cb2-5"></a><span class="kw">colnames</span>(x) &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="st">&quot;item_&quot;</span>, <span class="kw">seq_len</span>(<span class="kw">ncol</span>(x)))</span>
+<span id="cb2-6"><a href="#cb2-6"></a>x[, <span class="dv">2</span>] &lt;-<span class="st"> </span><span class="fl">0.8</span> <span class="op">*</span><span class="st"> </span>x[, <span class="dv">1</span>] <span class="op">+</span><span class="st"> </span><span class="fl">0.2</span> <span class="op">*</span><span class="st"> </span><span class="kw">rnorm</span>(<span class="kw">nrow</span>(x))</span>
+<span id="cb2-7"><a href="#cb2-7"></a>x[, <span class="dv">3</span>] &lt;-<span class="st"> </span><span class="fl">-0.7</span> <span class="op">*</span><span class="st"> </span>x[, <span class="dv">1</span>] <span class="op">+</span><span class="st"> </span><span class="fl">0.3</span> <span class="op">*</span><span class="st"> </span><span class="kw">rnorm</span>(<span class="kw">nrow</span>(x))</span>
+<span id="cb2-8"><a href="#cb2-8"></a>x[<span class="dv">1</span><span class="op">:</span><span class="dv">6</span>, <span class="dv">4</span>] &lt;-<span class="st"> </span><span class="ot">NA_real_</span></span>
+<span id="cb2-9"><a href="#cb2-9"></a></span>
+<span id="cb2-10"><a href="#cb2-10"></a>cm &lt;-<span class="st"> </span><span class="kw">bicor</span>(x, <span class="dt">min_overlap =</span> <span class="dv">3</span>)</span>
+<span id="cb2-11"><a href="#cb2-11"></a><span class="kw">round</span>(cm, <span class="dv">3</span>)</span>
+<span id="cb2-12"><a href="#cb2-12"></a><span class="co">#&gt;        item_1 item_2 item_3 item_4 item_5 item_6</span></span>
+<span id="cb2-13"><a href="#cb2-13"></a><span class="co">#&gt; item_1  1.000  0.956 -0.907  0.010  0.137 -0.007</span></span>
+<span id="cb2-14"><a href="#cb2-14"></a><span class="co">#&gt; item_2  0.956  1.000 -0.842  0.036  0.076 -0.002</span></span>
+<span id="cb2-15"><a href="#cb2-15"></a><span class="co">#&gt; item_3 -0.907 -0.842  1.000 -0.021 -0.136 -0.033</span></span>
+<span id="cb2-16"><a href="#cb2-16"></a><span class="co">#&gt; item_4  0.010  0.036 -0.021  1.000 -0.047  0.091</span></span>
+<span id="cb2-17"><a href="#cb2-17"></a><span class="co">#&gt; item_5  0.137  0.076 -0.136 -0.047  1.000 -0.029</span></span>
+<span id="cb2-18"><a href="#cb2-18"></a><span class="co">#&gt; item_6 -0.007 -0.002 -0.033  0.091 -0.029  1.000</span></span></code></pre></div>
+<p>For a dense input, <code>bicor(x)</code> returns the square matrix of column similarities. Supplying a second dense matrix produces an <code>ncol(x)</code> by <code>ncol(y)</code> result. Matrix output retains undefined entries as <code>NA</code>.</p>
+<div id="selecting-correlation-edges" class="section level3">
+<h3>Selecting correlation edges</h3>
+<p>An absolute-score cutoff retains associations of either sign:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>edges &lt;-<span class="st"> </span><span class="kw">bicor</span>(x, <span class="dt">tidy =</span> <span class="ot">TRUE</span>, <span class="dt">threshold =</span> <span class="fl">0.5</span>)</span>
+<span id="cb3-2"><a href="#cb3-2"></a>edges</span>
+<span id="cb3-3"><a href="#cb3-3"></a><span class="co">#&gt;     col1   col2        cor</span></span>
+<span id="cb3-4"><a href="#cb3-4"></a><span class="co">#&gt; 1 item_1 item_2  0.9564391</span></span>
+<span id="cb3-5"><a href="#cb3-5"></a><span class="co">#&gt; 2 item_1 item_3 -0.9066908</span></span>
+<span id="cb3-6"><a href="#cb3-6"></a><span class="co">#&gt; 3 item_2 item_3 -0.8424723</span></span></code></pre></div>
+<p>The table reports column identifiers in <code>col1</code> and <code>col2</code>, and the signed score in <code>cor</code>. A self-comparison reports each eligible pair once, without the diagonal. For <code>bicor(x, y, tidy = TRUE)</code>, the identifiers refer to <code>x</code> and <code>y</code>, respectively.</p>
+</div>
+<div id="selecting-nearest-neighbors" class="section level3">
+<h3>Selecting nearest neighbors</h3>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>kn &lt;-<span class="st"> </span><span class="kw">bicor_knn</span>(x, <span class="dt">knn =</span> <span class="dv">2</span>, <span class="dt">threshold =</span> <span class="dv">0</span>)</span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="kw">head</span>(kn)</span>
+<span id="cb4-3"><a href="#cb4-3"></a><span class="co">#&gt;     col1   col2        val rank</span></span>
+<span id="cb4-4"><a href="#cb4-4"></a><span class="co">#&gt; 1 item_1 item_2 0.95643913    1</span></span>
+<span id="cb4-5"><a href="#cb4-5"></a><span class="co">#&gt; 2 item_1 item_5 0.13657572    2</span></span>
+<span id="cb4-6"><a href="#cb4-6"></a><span class="co">#&gt; 3 item_2 item_1 0.95643913    1</span></span>
+<span id="cb4-7"><a href="#cb4-7"></a><span class="co">#&gt; 4 item_2 item_5 0.07624946    2</span></span>
+<span id="cb4-8"><a href="#cb4-8"></a><span class="co">#&gt; 5 item_4 item_6 0.09099176    1</span></span>
+<span id="cb4-9"><a href="#cb4-9"></a><span class="co">#&gt; 6 item_4 item_2 0.03638161    2</span></span></code></pre></div>
+<p>Here, <code>col1</code> denotes the target and <code>col2</code> its selected neighbor. <code>val</code> is the signed score, and <code>rank</code> orders neighbors within each target. Selection is directed: an edge need not be reciprocal. Self-neighbors are excluded when <code>y</code> is omitted, and fewer than <code>knn</code> edges are returned if too few candidates qualify.</p>
+<p>The two selection rules are distinct:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Output</th>
+<th>Eligibility rule</th>
+<th>Ordering</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Correlation edges</td>
+<td><code>abs(cor) &gt;= threshold</code></td>
+<td>No neighbor ranking</td>
+</tr>
+<tr class="even">
+<td>KNN edges</td>
+<td><code>val &gt; threshold</code></td>
+<td>Decreasing signed score within target</td>
+</tr>
+</tbody>
+</table>
+<p>Consequently, a strong negative association can survive an absolute cutoff but fail a positive KNN cutoff. The default <code>threshold = -Inf</code> admits all finite scores, including negative values. The argument does not filter a dense correlation matrix.</p>
+</div>
+</div>
+<div id="sparse-measurements-and-cross-matrix-neighbors" class="section level2">
+<h2>Sparse measurements and cross-matrix neighbors</h2>
+<p>To retain a defined robust scale, construct the sparse example by setting 20% of the simulated measurements to zero. Convert the result to sparse storage after modifying the values.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="kw">set.seed</span>(<span class="dv">12</span>)</span>
+<span id="cb5-2"><a href="#cb5-2"></a>x_zero &lt;-<span class="st"> </span>x</span>
+<span id="cb5-3"><a href="#cb5-3"></a>index &lt;-<span class="st"> </span><span class="kw">sample.int</span>(<span class="kw">length</span>(x_zero), <span class="kw">floor</span>(<span class="fl">0.2</span> <span class="op">*</span><span class="st"> </span><span class="kw">length</span>(x_zero)))</span>
+<span id="cb5-4"><a href="#cb5-4"></a>x_zero[index] &lt;-<span class="st"> </span><span class="dv">0</span></span>
+<span id="cb5-5"><a href="#cb5-5"></a>xs &lt;-<span class="st"> </span>Matrix<span class="op">::</span><span class="kw">Matrix</span>(x_zero, <span class="dt">sparse =</span> <span class="ot">TRUE</span>)</span>
+<span id="cb5-6"><a href="#cb5-6"></a></span>
+<span id="cb5-7"><a href="#cb5-7"></a>edges_sparse &lt;-<span class="st"> </span><span class="kw">bicor</span>(xs, <span class="dt">tidy =</span> <span class="ot">TRUE</span>, <span class="dt">threshold =</span> <span class="fl">0.5</span>)</span>
+<span id="cb5-8"><a href="#cb5-8"></a>kn_sparse &lt;-<span class="st"> </span><span class="kw">bicor_knn</span>(xs, <span class="dt">knn =</span> <span class="dv">2</span>, <span class="dt">threshold =</span> <span class="dv">0</span>)</span>
+<span id="cb5-9"><a href="#cb5-9"></a><span class="kw">head</span>(edges_sparse)</span>
+<span id="cb5-10"><a href="#cb5-10"></a><span class="co">#&gt;     col1   col2        cor</span></span>
+<span id="cb5-11"><a href="#cb5-11"></a><span class="co">#&gt; 1 item_1 item_2  0.6677082</span></span>
+<span id="cb5-12"><a href="#cb5-12"></a><span class="co">#&gt; 2 item_1 item_3 -0.6881657</span></span>
+<span id="cb5-13"><a href="#cb5-13"></a><span class="co">#&gt; 3 item_2 item_3 -0.6439078</span></span>
+<span id="cb5-14"><a href="#cb5-14"></a><span class="kw">head</span>(kn_sparse)</span>
+<span id="cb5-15"><a href="#cb5-15"></a><span class="co">#&gt;     col1   col2        val rank</span></span>
+<span id="cb5-16"><a href="#cb5-16"></a><span class="co">#&gt; 1 item_1 item_2 0.66770825    1</span></span>
+<span id="cb5-17"><a href="#cb5-17"></a><span class="co">#&gt; 2 item_1 item_4 0.10508486    2</span></span>
+<span id="cb5-18"><a href="#cb5-18"></a><span class="co">#&gt; 3 item_2 item_1 0.66770825    1</span></span>
+<span id="cb5-19"><a href="#cb5-19"></a><span class="co">#&gt; 4 item_2 item_5 0.01126153    2</span></span>
+<span id="cb5-20"><a href="#cb5-20"></a><span class="co">#&gt; 5 item_3 item_6 0.03957315    1</span></span>
+<span id="cb5-21"><a href="#cb5-21"></a><span class="co">#&gt; 6 item_4 item_1 0.10508486    1</span></span></code></pre></div>
+<p>Sparse calculations accept double-valued <code>Matrix</code> classes that can be represented as <code>dgCMatrix</code>. Implicit entries contribute observed zeros. Sparse inputs require edge or KNN output; dense correlation-matrix output requires dense inputs. Internal working panels may nevertheless be dense.</p>
+<p>For cross-matrix selection, align the observations of both inputs before calling the function. Row order is positional; row names are not matched.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="kw">set.seed</span>(<span class="dv">13</span>)</span>
+<span id="cb6-2"><a href="#cb6-2"></a>y &lt;-<span class="st"> </span><span class="kw">cbind</span>(</span>
+<span id="cb6-3"><a href="#cb6-3"></a>  <span class="dt">target_A =</span> x[, <span class="dv">1</span>] <span class="op">+</span><span class="st"> </span><span class="kw">rnorm</span>(<span class="kw">nrow</span>(x), <span class="dt">sd =</span> <span class="fl">0.2</span>),</span>
+<span id="cb6-4"><a href="#cb6-4"></a>  <span class="dt">target_B =</span> x[, <span class="dv">3</span>] <span class="op">+</span><span class="st"> </span><span class="kw">rnorm</span>(<span class="kw">nrow</span>(x), <span class="dt">sd =</span> <span class="fl">0.2</span>)</span>
+<span id="cb6-5"><a href="#cb6-5"></a>)</span>
+<span id="cb6-6"><a href="#cb6-6"></a>kn_xy &lt;-<span class="st"> </span><span class="kw">bicor_knn</span>(</span>
+<span id="cb6-7"><a href="#cb6-7"></a>  xs, y, <span class="dt">knn =</span> <span class="dv">2</span>, <span class="dt">threshold =</span> <span class="fl">0.5</span>,</span>
+<span id="cb6-8"><a href="#cb6-8"></a>  <span class="dt">bipartite_levels =</span> <span class="st">&quot;separate&quot;</span></span>
+<span id="cb6-9"><a href="#cb6-9"></a>)</span>
+<span id="cb6-10"><a href="#cb6-10"></a>kn_xy</span>
+<span id="cb6-11"><a href="#cb6-11"></a><span class="co">#&gt;       col1   col2       val rank</span></span>
+<span id="cb6-12"><a href="#cb6-12"></a><span class="co">#&gt; 1 target_A item_1 0.8670493    1</span></span>
+<span id="cb6-13"><a href="#cb6-13"></a><span class="co">#&gt; 2 target_A item_2 0.7933726    2</span></span>
+<span id="cb6-14"><a href="#cb6-14"></a><span class="co">#&gt; 3 target_B item_3 0.8340956    1</span></span></code></pre></div>
+<p>Each column of <code>y</code> is a target whose candidates are columns of <code>xs</code>. Accordingly, <code>col1</code> carries target names and <code>col2</code> carries source names. <code>bipartite_levels = &quot;separate&quot;</code> preserves these distinct name sets. Either input may use dense or sparse storage.</p>
+</div>
+<div id="finite-overlap-and-normalization" class="section level2">
+<h2>Finite overlap and normalization</h2>
+<p>For each column, the implementation estimates a median and scaled median absolute deviation (MAD) from its finite observations. The scale is <code>1.4826 * median(abs(x - median(x)))</code>; biweight deviations use a tuning multiplier of 9. These columnwise estimates and weights remain fixed across pairwise comparisons.</p>
+<p>With <code>pairwise.complete.obs = TRUE</code>, the numerator combines weighted deviations only at observations finite in both columns. <code>NA</code>, <code>NaN</code>, and infinities are excluded; zeros are retained. The denominator is selected separately:</p>
+<ul>
+<li><code>use_intersection_denominator = FALSE</code> uses sums of squared weighted deviations over each column’s full set of finite observations.</li>
+<li><code>use_intersection_denominator = TRUE</code> restricts both sums to the shared finite observations, without re-estimating the columnwise weights.</li>
+</ul>
+<p>The following example changes only the denominator convention:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>x_missing &lt;-<span class="st"> </span>x[, <span class="dv">1</span><span class="op">:</span><span class="dv">2</span>]</span>
+<span id="cb7-2"><a href="#cb7-2"></a>x_missing[<span class="dv">1</span><span class="op">:</span><span class="dv">20</span>, <span class="dv">2</span>] &lt;-<span class="st"> </span><span class="ot">NA_real_</span></span>
+<span id="cb7-3"><a href="#cb7-3"></a></span>
+<span id="cb7-4"><a href="#cb7-4"></a>r_column &lt;-<span class="st"> </span><span class="kw">bicor</span>(x_missing, <span class="dt">use_intersection_denominator =</span> <span class="ot">FALSE</span>)[<span class="dv">1</span>, <span class="dv">2</span>]</span>
+<span id="cb7-5"><a href="#cb7-5"></a>r_shared &lt;-<span class="st"> </span><span class="kw">bicor</span>(x_missing, <span class="dt">use_intersection_denominator =</span> <span class="ot">TRUE</span>)[<span class="dv">1</span>, <span class="dv">2</span>]</span>
+<span id="cb7-6"><a href="#cb7-6"></a><span class="kw">c</span>(<span class="dt">column_denominator =</span> r_column, <span class="dt">shared_denominator =</span> r_shared)</span>
+<span id="cb7-7"><a href="#cb7-7"></a><span class="co">#&gt; column_denominator shared_denominator </span></span>
+<span id="cb7-8"><a href="#cb7-8"></a><span class="co">#&gt;          0.8345499          0.9586580</span></span></code></pre></div>
+<p>For fully observed pairs, the two conventions coincide. <code>min_overlap</code> specifies the required count of shared finite observations, independently of their robust weights; the default is 3. It applies to complete data too.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>n_shared &lt;-<span class="st"> </span><span class="kw">sum</span>(<span class="kw">is.finite</span>(x_missing[, <span class="dv">1</span>]) <span class="op">&amp;</span><span class="st"> </span><span class="kw">is.finite</span>(x_missing[, <span class="dv">2</span>]))</span>
+<span id="cb8-2"><a href="#cb8-2"></a>n_shared</span>
+<span id="cb8-3"><a href="#cb8-3"></a><span class="co">#&gt; [1] 60</span></span>
+<span id="cb8-4"><a href="#cb8-4"></a><span class="kw">bicor</span>(x_missing, <span class="dt">min_overlap =</span> n_shared <span class="op">+</span><span class="st"> </span><span class="dv">1</span>)[<span class="dv">1</span>, <span class="dv">2</span>]</span>
+<span id="cb8-5"><a href="#cb8-5"></a><span class="co">#&gt; [1] NA</span></span>
+<span id="cb8-6"><a href="#cb8-6"></a><span class="kw">bicor</span>(x_missing, <span class="dt">pairwise.complete.obs =</span> <span class="ot">FALSE</span>)[<span class="dv">1</span>, <span class="dv">2</span>]</span>
+<span id="cb8-7"><a href="#cb8-7"></a><span class="co">#&gt; [1] NA</span></span></code></pre></div>
+<p>The first correlation is undefined because the overlap requirement exceeds the available observations. The second is undefined because <code>pairwise.complete.obs = FALSE</code> excludes comparisons involving an incomplete column. This option does not delete incomplete rows across the entire matrix.</p>
+</div>
+<div id="undefined-scores" class="section level2">
+<h2>Undefined scores</h2>
+<p>A zero MAD or undefined normalization makes bicor unavailable. This can occur even in a nonconstant column when most measurements are identical. Sparse storage does not alter that statistical condition.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>z &lt;-<span class="st"> </span><span class="kw">cbind</span>(</span>
+<span id="cb9-2"><a href="#cb9-2"></a>  <span class="dt">variable =</span> x[, <span class="dv">1</span>],</span>
+<span id="cb9-3"><a href="#cb9-3"></a>  <span class="dt">constant =</span> <span class="kw">rep</span>(<span class="dv">1</span>, <span class="kw">nrow</span>(x)),</span>
+<span id="cb9-4"><a href="#cb9-4"></a>  <span class="dt">zero_heavy =</span> <span class="kw">c</span>(<span class="kw">rep</span>(<span class="dv">0</span>, <span class="dv">60</span>), <span class="kw">seq_len</span>(<span class="dv">20</span>)),</span>
+<span id="cb9-5"><a href="#cb9-5"></a>  <span class="dt">all_missing =</span> <span class="kw">rep</span>(<span class="ot">NA_real_</span>, <span class="kw">nrow</span>(x))</span>
+<span id="cb9-6"><a href="#cb9-6"></a>)</span>
+<span id="cb9-7"><a href="#cb9-7"></a><span class="kw">diag</span>(<span class="kw">bicor</span>(z))</span>
+<span id="cb9-8"><a href="#cb9-8"></a><span class="co">#&gt;    variable    constant  zero_heavy all_missing </span></span>
+<span id="cb9-9"><a href="#cb9-9"></a><span class="co">#&gt;           1          NA          NA          NA</span></span></code></pre></div>
+<p>Undefined comparisons remain <code>NA</code> in matrix output, including ineligible diagonal entries, and are omitted from edge and KNN tables. Inspect column variability when expected vertices have no reported neighbors.</p>
+</div>
+<div id="resource-configuration" class="section level2">
+<h2>Resource configuration</h2>
+<p>The default KNN path (<code>direct_sparse = TRUE</code>) retains bounded candidate sets while processing similarities in panels. It avoids retaining a full dense similarity matrix, but exact self-KNN still evaluates a quadratic number of candidate pairs. A thresholded correlation table can itself approach quadratic size if most pairs qualify.</p>
+<p><code>BGNS_MEM_MB</code> guides panel scratch allocation and defaults to 256 MB. Total process memory also includes inputs, returned results, preprocessing, and numerical-library workspace. <code>BGNS_NUM_THREADS</code> limits the package’s OpenMP regions, with a default of at most two threads; BLAS threading is configured independently. Builds without OpenMP execute those regions serially.</p>
+<p>When changing runtime controls, set them before the first computation:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a><span class="kw">Sys.setenv</span>(<span class="dt">BGNS_MEM_MB =</span> <span class="st">&quot;256&quot;</span>, <span class="dt">BGNS_NUM_THREADS =</span> <span class="st">&quot;2&quot;</span>)</span></code></pre></div>
+<p>Optional SIMD paths depend on the compiled target and runtime processor. See <code>help(&quot;bgns&quot;)</code> for additional controls. Specify the scientific overlap criterion through <code>min_overlap</code> rather than an environment variable.</p>
+</div>
+<div id="session-information" class="section level2">
+<h2>Session information</h2>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="kw">sessionInfo</span>()</span>
+<span id="cb11-2"><a href="#cb11-2"></a><span class="co">#&gt; R version 4.6.1 (2026-06-24)</span></span>
+<span id="cb11-3"><a href="#cb11-3"></a><span class="co">#&gt; Platform: aarch64-apple-darwin23</span></span>
+<span id="cb11-4"><a href="#cb11-4"></a><span class="co">#&gt; Running under: macOS Golden Gate 27.0</span></span>
+<span id="cb11-5"><a href="#cb11-5"></a><span class="co">#&gt; </span></span>
+<span id="cb11-6"><a href="#cb11-6"></a><span class="co">#&gt; Matrix products: default</span></span>
+<span id="cb11-7"><a href="#cb11-7"></a><span class="co">#&gt; BLAS:   /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRblas.0.dylib </span></span>
+<span id="cb11-8"><a href="#cb11-8"></a><span class="co">#&gt; LAPACK: /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1</span></span>
+<span id="cb11-9"><a href="#cb11-9"></a><span class="co">#&gt; </span></span>
+<span id="cb11-10"><a href="#cb11-10"></a><span class="co">#&gt; locale:</span></span>
+<span id="cb11-11"><a href="#cb11-11"></a><span class="co">#&gt; [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8</span></span>
+<span id="cb11-12"><a href="#cb11-12"></a><span class="co">#&gt; </span></span>
+<span id="cb11-13"><a href="#cb11-13"></a><span class="co">#&gt; time zone: Asia/Kolkata</span></span>
+<span id="cb11-14"><a href="#cb11-14"></a><span class="co">#&gt; tzcode source: internal</span></span>
+<span id="cb11-15"><a href="#cb11-15"></a><span class="co">#&gt; </span></span>
+<span id="cb11-16"><a href="#cb11-16"></a><span class="co">#&gt; attached base packages:</span></span>
+<span id="cb11-17"><a href="#cb11-17"></a><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
+<span id="cb11-18"><a href="#cb11-18"></a><span class="co">#&gt; </span></span>
+<span id="cb11-19"><a href="#cb11-19"></a><span class="co">#&gt; other attached packages:</span></span>
+<span id="cb11-20"><a href="#cb11-20"></a><span class="co">#&gt; [1] bgns_0.4.3</span></span>
+<span id="cb11-21"><a href="#cb11-21"></a><span class="co">#&gt; </span></span>
+<span id="cb11-22"><a href="#cb11-22"></a><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
+<span id="cb11-23"><a href="#cb11-23"></a><span class="co">#&gt;  [1] digest_0.6.39   R6_2.6.1        fastmap_1.2.0   Matrix_1.7-5   </span></span>
+<span id="cb11-24"><a href="#cb11-24"></a><span class="co">#&gt;  [5] xfun_0.60       lattice_0.22-9  cachem_1.1.0    knitr_1.51     </span></span>
+<span id="cb11-25"><a href="#cb11-25"></a><span class="co">#&gt;  [9] htmltools_0.5.9 rmarkdown_2.32  lifecycle_1.0.5 cli_3.6.6      </span></span>
+<span id="cb11-26"><a href="#cb11-26"></a><span class="co">#&gt; [13] grid_4.6.1      sass_0.4.10     jquerylib_0.1.4 compiler_4.6.1 </span></span>
+<span id="cb11-27"><a href="#cb11-27"></a><span class="co">#&gt; [17] tools_4.6.1     evaluate_1.0.5  bslib_0.12.0    yaml_2.3.12    </span></span>
+<span id="cb11-28"><a href="#cb11-28"></a><span class="co">#&gt; [21] otel_0.2.0      rlang_1.3.0     jsonlite_2.0.0</span></span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
